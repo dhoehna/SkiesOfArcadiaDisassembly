@@ -1,5 +1,6 @@
 #include "PlayerCharacter.h"
 
+// NTSC Address: 801f2a34
 int setExperience(int charId, int experience) {
 	int startXp = PlayerCharacterData[charId].experience;
 	int expTable[] = pFirstDotLmt->levelExperienceTables[charId];
@@ -7,6 +8,10 @@ int setExperience(int charId, int experience) {
 	int levelsGained = 0;
 
 	int level = 0;
+
+	// Multiply the output of rand by this to get a uniform float between 0 and 1
+	const float RAND_NORMALIZE = 3.0517578E-5; // 2^-15
+
 
 	if (experience >= 99999999) {
 		experience = 99999999;
@@ -27,16 +32,14 @@ int setExperience(int charId, int experience) {
 			// For each major statistic: power, will, vigor, agile, quick
 			for (int j = 0; j < 5; j++) {
 				double stat = (BasePCData[charId].statIncrease[j] * (float)level) + (float)BasePCData[charId].baseStat[j];
-				float r = (float)rand();
 
-				double stat2 = (0.98f * stat) + (0.04f * 3.0517578E-5f * r * stat);
+				double stat2 = (0.98f * stat) + (0.04f * RAND_NORMALIZE * (float)rand() * stat);
 
 				short statGain = (short)(stat - (float)PlayerCharacterData[charId].mainStat[j]);
 
 				// If we failed to gain a stat point or we gained too many stat points(!?) redo the calculation
 				if (statGain < 1 || 2.0f * BasePCData[charId].statIncrease[j] <= (float)statGain) {
-					r = (float)rand();
-					stat2 = (0.98f * stat) + (0.04f * 3.0517578E-5f * r * stat);
+					stat2 = (0.98f * stat) + (0.04f * RAND_NORMALIZE * (float)rand() * stat);
 				}
 
 				float curStat = (float)PlayerCharacterData[charId].mainStat[j];
@@ -47,6 +50,8 @@ int setExperience(int charId, int experience) {
 				if (stat2 >= 999.0f) {
 					stat2 = 999.0f;
 				}
+
+				PlayerCharacterData[charId].mainStat[j] = stat2;
 			}
 
 			PlayerCharacterData[charId].maxMpPartial += BasePCData[charId].mpIncrease;
@@ -65,7 +70,7 @@ int setExperience(int charId, int experience) {
 
 			float r = (float)rand();
 
-			short maxHpIncrease = (short)((float)PlayerCharacterData[charId].mainStat[STAT_VIGOR] * 3.0517578E-5f * r * 0.25f) + BasePCData.maxHpIncrease);
+			short maxHpIncrease = (short)((float)PlayerCharacterData[charId].mainStat[STAT_VIGOR] * 0.25 * RAND_NORMALIZE * (float)rand()) + BasePCData.maxHpIncrease);
 			PlayerCharacterData[charId].maxHP += (short)maxHpIncrease;
 
 			short newMaxHp = PlayerCharacterData[charId].maxHP;
